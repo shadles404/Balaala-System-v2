@@ -1,0 +1,239 @@
+{
+  "entities": {
+    "influencer": {
+      "title": "Influencer",
+      "description": "Contracted social media creator / influencer entity",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "maxLength": 100 },
+        "tiktokUsername": { "type": "string", "maxLength": 100 },
+        "phoneNumber": { "type": "string", "maxLength": 50 },
+        "category": { "type": "string", "maxLength": 100 },
+        "targetVideosPerMonth": { "type": "number" },
+        "salary": { "type": "number" },
+        "agreementStartDate": { "type": "string", "maxLength": 20 },
+        "agreementEndDate": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["fullName", "tiktokUsername", "category", "targetVideosPerMonth", "salary", "status"]
+    },
+    "monthly_target": {
+      "title": "Monthly Target",
+      "description": "Influencer video deliverables target tracking for an operational month",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "influencerId": { "type": "string", "maxLength": 100 },
+        "targetVideos": { "type": "number" },
+        "completedVideos": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "influencerId", "targetVideos", "completedVideos"]
+    },
+    "delivery_record": {
+      "title": "Delivery Record",
+      "description": "Product unit delivery record dispatched to an influencer",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "influencerId": { "type": "string", "maxLength": 100 },
+        "influencerName": { "type": "string", "maxLength": 100 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "quantity": { "type": "number" },
+        "deliveryPrice": { "type": "number" },
+        "deliveryDate": { "type": "string", "maxLength": 20 },
+        "paymentStatus": { "type": "string", "enum": ["Paid", "Pending"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "influencerId", "productName", "quantity", "deliveryDate"]
+    },
+    "influencer_payment": {
+      "title": "Influencer Payment",
+      "description": "Monthly creator payroll retainer record",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "influencerId": { "type": "string", "maxLength": 100 },
+        "influencerName": { "type": "string", "maxLength": 100 },
+        "monthlySalary": { "type": "number" },
+        "completedVideos": { "type": "number" },
+        "targetVideos": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["Pending", "Approved", "Paid"] },
+        "paymentDate": { "type": "string", "maxLength": 20 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "submittedBy": { "type": "string", "maxLength": 100 },
+        "approvedBy": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "influencerId", "monthlySalary", "paymentStatus"]
+    },
+    "billboard": {
+      "title": "Billboard",
+      "description": "Out-of-home advertising billboard inventory asset",
+      "type": "object",
+      "properties": {
+        "vendorName": { "type": "string", "maxLength": 100 },
+        "billboardSize": { "type": "string", "maxLength": 100 },
+        "location": { "type": "string", "maxLength": 300 },
+        "productBrand": { "type": "string", "maxLength": 100 },
+        "rentalPrice": { "type": "number" },
+        "agreementStartDate": { "type": "string", "maxLength": 20 },
+        "agreementEndDate": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["vendorName", "location", "rentalPrice", "status"]
+    },
+    "billboard_payment": {
+      "title": "Billboard Lease Payment",
+      "description": "Monthly lease disbursement record for outdoor billboard",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "billboardId": { "type": "string", "maxLength": 100 },
+        "vendorName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 20 },
+        "paymentStatus": { "type": "string", "enum": ["Pending", "Approved", "Paid"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "billboardId", "amount", "paymentStatus"]
+    },
+    "lcd_screen": {
+      "title": "LCD Digital Screen",
+      "description": "Commercial digital screen network asset",
+      "type": "object",
+      "properties": {
+        "vendorName": { "type": "string", "maxLength": 100 },
+        "screenSize": { "type": "string", "maxLength": 100 },
+        "resolution": { "type": "string", "maxLength": 100 },
+        "location": { "type": "string", "maxLength": 300 },
+        "productBrand": { "type": "string", "maxLength": 100 },
+        "rentalPrice": { "type": "number" },
+        "agreementStartDate": { "type": "string", "maxLength": 20 },
+        "agreementEndDate": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["vendorName", "location", "rentalPrice", "status"]
+    },
+    "lcd_payment": {
+      "title": "LCD Screen Lease Payment",
+      "description": "Monthly lease disbursement record for digital screen loop",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "lcdId": { "type": "string", "maxLength": 100 },
+        "vendorName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 20 },
+        "paymentStatus": { "type": "string", "enum": ["Pending", "Approved", "Paid"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "lcdId", "amount", "paymentStatus"]
+    },
+    "monthly_budget": {
+      "title": "Monthly Budget",
+      "description": "Monthly marketing budget capital allocation across Local and International pools",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "totalBudget": { "type": "number" },
+        "localBudget": { "type": "number" },
+        "internationalBudget": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "updatedBy": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "totalBudget", "localBudget", "internationalBudget"]
+    },
+    "expense": {
+      "title": "Operational Expense",
+      "description": "Operational expense ledger item deducted from marketing budget pool",
+      "type": "object",
+      "properties": {
+        "month": { "type": "string", "maxLength": 20 },
+        "budgetPool": { "type": "string", "enum": ["Local", "International"] },
+        "category": { "type": "string", "enum": ["Influencers", "Billboards", "LCD Screens", "Other"] },
+        "description": { "type": "string", "maxLength": 300 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 20 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdBy": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["month", "budgetPool", "category", "description", "amount", "date"]
+    },
+    "user": {
+      "title": "Enterprise System User",
+      "description": "Authenticated system user profile, role, status, and dynamic capability permissions",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 100 },
+        "username": { "type": "string", "maxLength": 50 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "sub_user"] },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "permissions": { "type": "object" },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "email", "fullName", "role", "status", "permissions"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "System users directory with role-based permissions and activity status"
+    },
+    "/influencers/{influencerId}": {
+      "schema": "influencer",
+      "description": "Directory of registered marketing influencers and content creators"
+    },
+    "/monthly_targets/{targetId}": {
+      "schema": "monthly_target",
+      "description": "Monthly video deliverables targets and status for each influencer"
+    },
+    "/deliveries/{deliveryId}": {
+      "schema": "delivery_record",
+      "description": "Physical product shipments and PR packages sent to influencers"
+    },
+    "/influencer_payments/{paymentId}": {
+      "schema": "influencer_payment",
+      "description": "Creator retainer disbursements and payroll authorizations"
+    },
+    "/billboards/{billboardId}": {
+      "schema": "billboard",
+      "description": "Out-of-home advertising billboards and highway bulletins"
+    },
+    "/billboard_payments/{paymentId}": {
+      "schema": "billboard_payment",
+      "description": "Lease rental disbursements for physical billboards"
+    },
+    "/lcd_screens/{screenId}": {
+      "schema": "lcd_screen",
+      "description": "Commercial high-traffic LCD screens and digital signage"
+    },
+    "/lcd_payments/{paymentId}": {
+      "schema": "lcd_payment",
+      "description": "Lease rental disbursements for commercial digital screens"
+    },
+    "/budgets/{budgetId}": {
+      "schema": "monthly_budget",
+      "description": "Monthly marketing budget pools for Local and International campaigns"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "expense",
+      "description": "Operational expense ledger deducting from marketing budget pools"
+    }
+  }
+}

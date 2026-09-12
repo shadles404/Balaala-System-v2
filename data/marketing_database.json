@@ -1,0 +1,68 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_default",
+      "username": "admin",
+      "passwordHash": "$2b$10$G3eXGHr8TCj9SoBdQ6GAE.bqqgcTdbkrQ6ToKTEa2EvMWBAjSdLyK",
+      "fullName": "System Administrator",
+      "role": "admin",
+      "permissions": {
+        "influencers": true,
+        "targets": true,
+        "deliveries": true,
+        "billboards": true,
+        "lcd_screens": true,
+        "budgets": true,
+        "expenses": true,
+        "payments": true,
+        "reports": true,
+        "settings": true
+      },
+      "canEditBudget": true,
+      "createdAt": "2026-09-12T14:29:32.227Z"
+    },
+    {
+      "id": "usr_staff_marketing",
+      "username": "marketing_staff",
+      "passwordHash": "$2b$10$duxTzOoTOM2DJN82Tr58guFaQOn64OH3yJ0pLRtSbNdZPVwJPjEgi",
+      "fullName": "Marketing Coordinator",
+      "role": "sub_user",
+      "permissions": {
+        "influencers": true,
+        "targets": true,
+        "deliveries": true,
+        "billboards": true,
+        "lcd_screens": true,
+        "budgets": true,
+        "expenses": true,
+        "payments": true,
+        "reports": true,
+        "settings": false
+      },
+      "canEditBudget": false,
+      "createdAt": "2026-09-12T14:29:32.227Z"
+    }
+  ],
+  "influencers": [],
+  "monthly_targets": [],
+  "deliveries": [],
+  "influencer_payments": [],
+  "billboards": [],
+  "billboard_payments": [],
+  "lcd_screens": [],
+  "lcd_payments": [],
+  "budgets": [
+    {
+      "id": "bgt_2026-09",
+      "month": "2026-09",
+      "totalBudget": 0,
+      "localBudget": 0,
+      "internationalBudget": 0,
+      "notes": "Budget for 2026-09",
+      "updatedBy": "system",
+      "updatedAt": "2026-09-12T14:29:32.371Z"
+    }
+  ],
+  "expenses": [],
+  "active_month": "2026-09"
+}

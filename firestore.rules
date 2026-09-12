@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------
+    // SECURITY HELPER FUNCTIONS
+    // -------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isRegistered() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Main administrator check: primary email match OR role == 'admin' in Firestore
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'balaalabc@gmail.com' ||
+        (isRegistered() && getUserData().role == 'admin')
+      );
+    }
+
+    // Check if the user account is active
+    function isUserActive() {
+      return isAdmin() || (
+        isRegistered() && getUserData().status == 'active'
+      );
+    }
+
+    // Check dynamic granular permission
+    function hasPermission(permKey) {
+      return isAdmin() || (
+        isUserActive() &&
+        getUserData().permissions[permKey] == true
+      );
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection validation test document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // -------------------------------------------------------------
+    // USERS COLLECTION
+    // Only Admin can manage sub-users and assign permissions.
+    // Sub-users cannot elevate their own roles or permissions.
+    // -------------------------------------------------------------
+    match /users/{userId} {
+      // User can read their own profile by UID or by matching authenticated Google email; Admin can read all profiles
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isAdmin() ||
+        (resource != null && resource.data.email == request.auth.token.email)
+      );
+
+      // Create: Admin can create users; Primary Admin & authorized users can sync their own document on first Google login
+      allow create: if isAdmin() || (
+        isSignedIn() &&
+        request.auth.uid == userId &&
+        (
+          request.auth.token.email == 'balaalabc@gmail.com' ||
+          request.resource.data.email == request.auth.token.email
+        )
+      );
+
+      // Update: Admin can update any user; Individual users can update their own lastLogin or name without privilege escalation
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.permissions == resource.data.permissions
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // INFLUENCERS & TARGETS
+    // -------------------------------------------------------------
+    match /influencers/{influencerId} {
+      allow read: if hasPermission('viewInfluencers');
+      allow create: if hasPermission('addInfluencers');
+      allow update: if hasPermission('updateInfluencers');
+      allow delete: if hasPermission('deleteInfluencers');
+    }
+
+    match /monthly_targets/{targetId} {
+      allow read: if hasPermission('viewInfluencers') || hasPermission('viewProducts');
+      allow create, update: if hasPermission('updateInfluencers') || hasPermission('addInfluencers') || hasPermission('manageCampaigns');
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // DELIVERIES (PRODUCTS)
+    // -------------------------------------------------------------
+    match /deliveries/{deliveryId} {
+      allow read: if hasPermission('viewProducts');
+      allow create: if hasPermission('addProducts');
+      allow update: if hasPermission('updateProducts');
+      allow delete: if hasPermission('deleteProducts');
+    }
+
+    // -------------------------------------------------------------
+    // INFLUENCER PAYROLL PAYMENTS
+    // -------------------------------------------------------------
+    match /influencer_payments/{paymentId} {
+      allow read: if hasPermission('viewPayments') || hasPermission('viewInfluencers');
+      allow create: if hasPermission('viewInfluencers') || hasPermission('viewPayments');
+      allow update: if hasPermission('approvePayments');
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // BILLBOARDS & PAYMENTS
+    // -------------------------------------------------------------
+    match /billboards/{billboardId} {
+      allow read: if hasPermission('manageBillboards');
+      allow create, update, delete: if hasPermission('manageBillboards');
+    }
+
+    match /billboard_payments/{paymentId} {
+      allow read: if hasPermission('manageBillboards') || hasPermission('viewPayments');
+      allow create, update, delete: if hasPermission('manageBillboards') || hasPermission('approvePayments');
+    }
+
+    // -------------------------------------------------------------
+    // LCD SCREENS & PAYMENTS
+    // -------------------------------------------------------------
+    match /lcd_screens/{screenId} {
+      allow read: if hasPermission('manageLCDScreens');
+      allow create, update, delete: if hasPermission('manageLCDScreens');
+    }
+
+    match /lcd_payments/{paymentId} {
+      allow read: if hasPermission('manageLCDScreens') || hasPermission('viewPayments');
+      allow create, update, delete: if hasPermission('manageLCDScreens') || hasPermission('approvePayments');
+    }
+
+    // -------------------------------------------------------------
+    // BUDGETS & CAMPAIGNS
+    // -------------------------------------------------------------
+    match /budgets/{budgetId} {
+      allow read: if hasPermission('manageCampaigns');
+      allow create, update, delete: if hasPermission('manageCampaigns');
+    }
+
+    // -------------------------------------------------------------
+    // OPERATIONAL EXPENSES
+    // -------------------------------------------------------------
+    match /expenses/{expenseId} {
+      allow read: if hasPermission('viewExpenses') || hasPermission('manageCampaigns');
+      allow create: if hasPermission('addExpenses') || hasPermission('manageCampaigns');
+      allow update, delete: if hasPermission('deleteExpenses');
+    }
+
+    // -------------------------------------------------------------
+    // SETTINGS & ACCOUNTING ROLLOVERS
+    // -------------------------------------------------------------
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /operational_months/{monthId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
