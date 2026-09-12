@@ -97,7 +97,12 @@ export const SettingsView: React.FC = () => {
         });
       } else {
         if (!form.email || !form.email.includes('@')) {
-          alert('A valid Google Account email address (Gmail or Google Workspace) is required.');
+          alert('A valid email address is required.');
+          return;
+        }
+
+        if (form.password && form.password.trim().length > 0 && form.password.trim().length < 6) {
+          alert('Password must be at least 6 characters.');
           return;
         }
 
@@ -105,6 +110,7 @@ export const SettingsView: React.FC = () => {
           fullName: form.fullName.trim(),
           email: form.email.trim(),
           username: form.username.trim() || form.email.split('@')[0],
+          password: form.password.trim() || undefined,
           role: form.role,
           status: form.status,
           permissions: form.role === 'admin' ? getAllPermissionsTrue() : form.permissions,
@@ -565,7 +571,7 @@ export const SettingsView: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Google Account Email * (Gmail / Google Workspace)
+                    Email Address * (Google or Standard Email)
                   </label>
                   <input
                     type="email"
@@ -596,10 +602,26 @@ export const SettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[11px] flex items-center space-x-2">
-                  <Shield className="w-4 h-4 shrink-0 text-blue-400" />
-                  <span>Sub-users authenticate seamlessly via Google Sign-In with their Google account.</span>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    {editingUser ? 'Password' : 'Password (min. 6 chars for email login)'}
+                  </label>
+                  <input
+                    type="password"
+                    disabled={Boolean(editingUser)}
+                    placeholder={editingUser ? '•••••••• (Managed via Firebase)' : 'Enter initial password (optional if Google)'}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className={`w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-500 focus:outline-none ${
+                      editingUser ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
+                  />
                 </div>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[11px] flex items-center space-x-2">
+                <Shield className="w-4 h-4 shrink-0 text-blue-400" />
+                <span>Sub-users can log in using either their <strong>Email/Username & Password</strong> or by clicking <strong>Sign In with Google</strong> with their registered email.</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">

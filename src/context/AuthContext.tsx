@@ -13,6 +13,7 @@ import {
   getFirestoreUser,
   ensureAdminProfile,
   syncGoogleUserProfile,
+  syncAuthenticatedUserProfile,
   findUserEmailByUsername,
   getAllPermissionsTrue,
   getFirestoreMonths,
@@ -209,23 +210,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      if (cred.user.email === 'balaalabc@gmail.com') {
-        const admin = await ensureAdminProfile(cred.user.uid, cred.user.email, cred.user.displayName || 'Primary Administrator');
-        setUser(admin);
-      } else {
-        const profile = await getFirestoreUser(cred.user.uid);
-        if (!profile) {
-          await signOut(auth);
-          setUser(null);
-          throw new Error('No user profile found in Firebase database. Please contact your system administrator.');
-        }
-        if (profile.status === 'inactive') {
-          await signOut(auth);
-          setUser(null);
-          throw new Error('This account has been deactivated by the Administrator.');
-        }
-        setUser(profile);
+      const profile = await syncAuthenticatedUserProfile(cred.user);
+      if (!profile) {
+        await signOut(auth);
+        setUser(null);
+        throw new Error('Access denied: No user account found for these credentials in Firestore. Please contact the Administrator.');
       }
+      if (profile.status === 'inactive') {
+        await signOut(auth);
+        setUser(null);
+        throw new Error('This account has been deactivated by the Administrator.');
+      }
+
+      setUser(profile);
       await refreshMonths();
     } catch (err: any) {
       console.error('[Firebase Auth] Login error:', err);

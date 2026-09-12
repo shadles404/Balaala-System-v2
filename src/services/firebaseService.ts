@@ -253,7 +253,7 @@ export async function findFirestoreUserByEmail(email: string): Promise<User | nu
   }
 }
 
-export async function syncGoogleUserProfile(firebaseUser: {
+export async function syncAuthenticatedUserProfile(firebaseUser: {
   uid: string;
   email: string | null;
   displayName?: string | null;
@@ -270,25 +270,26 @@ export async function syncGoogleUserProfile(firebaseUser: {
   const byUid = await getFirestoreUser(firebaseUser.uid);
   if (byUid) {
     if (byUid.status === 'inactive') {
-      throw new Error('This Google account has been deactivated by the Administrator.');
+      throw new Error('This account has been deactivated by the Administrator.');
     }
     // Update lastLogin & sync display name if available
+    const updatedName = firebaseUser.displayName || byUid.fullName;
     await updateFirestoreUser(firebaseUser.uid, {
       lastLogin: new Date().toISOString(),
-      fullName: firebaseUser.displayName || byUid.fullName,
+      fullName: updatedName,
     });
     return {
       ...byUid,
-      fullName: firebaseUser.displayName || byUid.fullName,
+      fullName: updatedName,
       lastLogin: new Date().toISOString(),
     };
   }
 
-  // 2. Check if pre-authorized by Admin using Google email
+  // 2. Check if pre-authorized by Admin using email
   const byEmail = await findFirestoreUserByEmail(email);
   if (byEmail) {
     if (byEmail.status === 'inactive') {
-      throw new Error('This Google account has been deactivated by the Administrator.');
+      throw new Error('This account has been deactivated by the Administrator.');
     }
 
     const now = new Date().toISOString();
@@ -319,9 +320,11 @@ export async function syncGoogleUserProfile(firebaseUser: {
     return { id: firebaseUser.uid, ...syncedUser };
   }
 
-  // Google Account not authorized by Administrator
+  // Account not authorized by Administrator
   return null;
 }
+
+export const syncGoogleUserProfile = syncAuthenticatedUserProfile;
 
 export async function createFirestoreSubUser(userData: {
   fullName: string;
@@ -338,13 +341,38 @@ export async function createFirestoreSubUser(userData: {
   // Check if user with this email already exists
   const existing = await findFirestoreUserByEmail(normalizedEmail);
   if (existing) {
-    throw new Error(`A user with email "${normalizedEmail}" is already registered.`);
+    throw new Error(`A user with email "${normalizedEmail}" is already registered in the system.`);
   }
 
-  // Create document in Firestore. When user signs in with Google, UID will seamlessly link.
-  const docId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  let finalUid = `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+  // If a password was provided (for email/password login), create Firebase Auth credentials using secondary app instance
+  if (userData.password && userData.password.trim().length >= 6) {
+    const secondaryAppName = `subuser_creator_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, normalizedEmail, userData.password.trim());
+      finalUid = cred.user.uid;
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+    } catch (authErr: any) {
+      try {
+        await deleteApp(secondaryApp);
+      } catch {}
+
+      if (authErr.code === 'auth/email-already-in-use') {
+        // If email already exists in Auth, we still create the Firestore record with a mapped ID
+        console.warn('[Firebase Auth] Email already exists in Auth; linking Firestore profile');
+      } else {
+        throw authErr;
+      }
+    }
+  }
+
   const newUser: Omit<User, 'id'> = {
-    uid: docId,
+    uid: finalUid,
     email: normalizedEmail,
     username: (userData.username || normalizedEmail.split('@')[0]).trim().toLowerCase(),
     fullName: userData.fullName.trim(),
@@ -355,8 +383,8 @@ export async function createFirestoreSubUser(userData: {
     updatedAt: now,
   };
 
-  await setDoc(doc(db, 'users', docId), sanitizeDoc(newUser));
-  return { id: docId, ...newUser };
+  await setDoc(doc(db, 'users', finalUid), sanitizeDoc(newUser));
+  return { id: finalUid, ...newUser };
 }
 
 export async function updateFirestoreUser(uid: string, updates: Partial<User>): Promise<void> {

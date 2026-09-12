@@ -24,6 +24,8 @@ import {
   ShieldAlert,
   KeyRound,
   LogIn,
+  Mail,
+  User as UserIcon,
   AlertCircle,
 } from 'lucide-react';
 import { UserPermissions } from './types';
@@ -50,9 +52,11 @@ const GoogleIcon = () => (
 );
 
 function MainLayout() {
-  const { user, loading, isAdmin, canAccess, loginWithGoogle, authError, clearAuthError } = useAuth();
+  const { user, loading, isAdmin, canAccess, login, loginWithGoogle, authError, clearAuthError } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [signInIdentifier, setSignInIdentifier] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
   const [signInLoading, setSignInLoading] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
 
@@ -64,6 +68,20 @@ function MainLayout() {
       await loginWithGoogle();
     } catch (err: any) {
       setSignInError(err.message || 'Google sign-in failed. Please try again.');
+    } finally {
+      setSignInLoading(false);
+    }
+  };
+
+  const handlePortalEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignInError(null);
+    clearAuthError();
+    setSignInLoading(true);
+    try {
+      await login(signInIdentifier, signInPassword);
+    } catch (err: any) {
+      setSignInError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setSignInLoading(false);
     }
@@ -145,15 +163,15 @@ function MainLayout() {
         </header>
 
         {/* Authentication Portal Body */}
-        <main className="max-w-md w-full mx-auto px-4 py-10">
+        <main className="max-w-md w-full mx-auto px-4 py-8">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-5">
             <div className="text-center space-y-2">
-              <div className="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20">
-                <GoogleIcon />
+              <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20">
+                <Lock className="w-6 h-6" />
               </div>
               <h1 className="text-xl font-bold text-white tracking-tight">Enterprise Sign In</h1>
               <p className="text-xs text-slate-400">
-                Direct single-click authentication with your Google Account
+                Sign in with your Google Account or Email & Password
               </p>
             </div>
 
@@ -164,25 +182,82 @@ function MainLayout() {
               </div>
             )}
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
+              {/* Option 1: Google Sign In */}
               <button
                 type="button"
                 id="btn-portal-google-signin"
                 onClick={handlePortalGoogleSignIn}
                 disabled={signInLoading}
-                className="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm rounded-xl transition shadow-lg flex items-center justify-center space-x-3 border border-slate-200 active:scale-[0.99] disabled:opacity-60"
+                className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm rounded-xl transition shadow-md flex items-center justify-center space-x-2.5 border border-slate-200 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
               >
                 <GoogleIcon />
                 <span>{signInLoading ? 'Connecting to Google...' : 'Sign In with Google'}</span>
               </button>
 
-              <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 text-left text-xs space-y-1.5">
+              {/* Visual Divider */}
+              <div className="relative flex py-1 items-center">
+                <div className="grow border-t border-slate-800"></div>
+                <span className="shrink mx-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Or continue with credentials
+                </span>
+                <div className="grow border-t border-slate-800"></div>
+              </div>
+
+              {/* Option 2: Email or Username + Password */}
+              <form onSubmit={handlePortalEmailSignIn} className="space-y-3.5 text-left">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Email Address or Username
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="portal-username"
+                      type="text"
+                      required
+                      value={signInIdentifier}
+                      onChange={(e) => setSignInIdentifier(e.target.value)}
+                      placeholder="e.g. sarah.jenkins@gmail.com or username"
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-500 focus:outline-none pl-9"
+                    />
+                    <UserIcon className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
+                  <div className="relative">
+                    <input
+                      id="portal-password"
+                      type="password"
+                      required
+                      value={signInPassword}
+                      onChange={(e) => setSignInPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-500 focus:outline-none pl-9"
+                    />
+                    <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  id="btn-portal-signin"
+                  disabled={signInLoading}
+                  className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-semibold text-xs rounded-lg transition shadow-md flex items-center justify-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{signInLoading ? 'Authenticating...' : 'Sign In with Password'}</span>
+                </button>
+              </form>
+
+              <div className="p-3 bg-slate-800/70 rounded-xl border border-slate-700/70 text-left text-xs space-y-1">
                 <div className="flex items-center space-x-2 text-amber-300 font-semibold text-[11px]">
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>Enterprise Google Workspace & Gmail Authentication</span>
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span>Dual Enterprise Authentication</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Administrator (<span className="text-slate-300 font-mono">balaalabc@gmail.com</span>) and authorized team members sign in securely with their Google credentials without maintaining local passwords.
+                  Administrator and sub-users can log in using either their registered <strong>Google Account</strong> or their assigned <strong>Email/Username and Password</strong>.
                 </p>
               </div>
             </div>

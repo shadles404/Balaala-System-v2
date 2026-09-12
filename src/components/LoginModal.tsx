@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, AlertCircle } from 'lucide-react';
+import { Shield, AlertCircle, Lock, LogIn, User as UserIcon, KeyRound } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -29,7 +29,9 @@ const GoogleIcon = () => (
 );
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { loginWithGoogle, authError, clearAuthError } = useAuth();
+  const { login, loginWithGoogle, authError, clearAuthError } = useAuth();
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,48 +51,109 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+    clearAuthError();
+    setLoading(true);
+    try {
+      await login(identifier, password);
+      onClose();
+    } catch (err: any) {
+      setLocalError(err.message || 'Authentication failed. Please check credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const displayedError = localError || authError;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl text-slate-100 animate-in fade-in zoom-in-95 duration-150 space-y-4">
         {/* Modal Header */}
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
-            <GoogleIcon />
+        <div className="flex items-center space-x-3 pb-1 border-b border-slate-800">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <Lock className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Sign In with Google</h2>
-            <p className="text-xs text-slate-400">Direct enterprise authentication via Google</p>
+            <h2 className="text-lg font-bold text-white tracking-tight">Enterprise Authentication</h2>
+            <p className="text-xs text-slate-400">Sign in with Google or your credentials</p>
           </div>
         </div>
 
         {displayedError && (
-          <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2">
+          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span className="leading-relaxed">{displayedError}</span>
           </div>
         )}
 
         <div className="space-y-4">
+          {/* Option 1: Google Sign In */}
           <button
             type="button"
             id="btn-modal-google-signin"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm rounded-xl transition shadow-lg flex items-center justify-center space-x-3 border border-slate-200 active:scale-[0.99] disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs sm:text-sm rounded-xl transition shadow-md flex items-center justify-center space-x-2.5 border border-slate-200 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
             <GoogleIcon />
             <span>{loading ? 'Connecting with Google...' : 'Continue with Google'}</span>
           </button>
 
-          <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-400">
-            <div className="flex items-center space-x-1.5 text-slate-300 font-semibold mb-0.5">
-              <Shield className="w-3.5 h-3.5 text-blue-400" />
-              <span>Direct Google Account Authentication</span>
-            </div>
-            Admin and authorized team members authenticate directly using their Google Workspace or Gmail accounts. No passwords required.
+          {/* Divider */}
+          <div className="relative flex py-0.5 items-center">
+            <div className="grow border-t border-slate-800"></div>
+            <span className="shrink mx-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              Or email & password
+            </span>
+            <div className="grow border-t border-slate-800"></div>
           </div>
+
+          {/* Option 2: Email & Password */}
+          <form onSubmit={handleEmailSignIn} className="space-y-3 text-left">
+            <div>
+              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                Email Address or Username
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="e.g. sarah.jenkins@gmail.com or username"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-500 focus:outline-none pl-8"
+                />
+                <UserIcon className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-medium text-slate-300 mb-1">Password</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-500 focus:outline-none pl-8"
+                />
+                <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-semibold text-xs rounded-lg transition shadow-md flex items-center justify-center space-x-2"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+            </button>
+          </form>
 
           <div className="pt-2 flex justify-end">
             <button
